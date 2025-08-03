@@ -37,6 +37,9 @@ sudo apt install -y maven
 
 # Clone repository 
 # echo "Cloning repository..."
+echo "Cloning repository..."
+PARENT_DIR="$(dirname "$(pwd)")"
+cd "$PARENT_DIR"
 if [ -d "P2P-File-Sharer" ]; then
     echo "Removing existing P2P-File-Sharer directory..."
     rm -rf P2P-File-Sharer
