@@ -35,8 +35,12 @@ sudo npm install -g pm2
 echo "Installing Maven..."
 sudo apt install -y maven
 
-# Clone repository (uncomment and modify if using Git)
+# Clone repository 
 # echo "Cloning repository..."
+if [ -d "P2P-File-Sharer" ]; then
+    echo "Removing existing P2P-File-Sharer directory..."
+    rm -rf P2P-File-Sharer
+fi
 git clone https://github.com/rishibabel02/P2P-File-Sharer.git
 cd P2P-File-Sharer
 
