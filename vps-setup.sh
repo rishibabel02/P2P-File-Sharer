@@ -120,7 +120,7 @@ fi
 # Start backend with PM2
 echo "Starting backend with PM2..."
 # Ensure all dependencies are in the classpath
-CLASSPATH="target/p2p-1.0-SNAPSHOT.jar:$(mvn dependency:build-classpath -DincludeScope=runtime -Dmdep.outputFile=/dev/stdout -q)"
+CLASSPATH="target/P2P-File-Sharing-1.0-SNAPSHOT.jar:$(mvn dependency:build-classpath -DincludeScope=runtime -Dmdep.outputFile=/dev/stdout -q)"
 pm2 start --name dropflo-backend java -- -cp "$CLASSPATH" p2p.App
 
 # Start frontend with PM2
