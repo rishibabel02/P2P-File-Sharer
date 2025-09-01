@@ -1,13 +1,11 @@
-version: '3.8' 
+version: '3.8'
 services:
   backend:
-    build: 
-      context: .
-      dockerfile: Dockerfile.backend
+    image: rishibabel02/p2p-backend:latest
     ports:
       - "8080:8080"
       - "49152-65535:49152-65535/udp"
-    restart: always 
+    restart: always
 
   frontend:
     build:
@@ -17,6 +15,6 @@ services:
       - "3000:3000"
     environment:
       - NEXT_PUBLIC_API_URL=https://www.dropflo.click 
-    restart: always 
+    restart: always
     depends_on:
       - backend
