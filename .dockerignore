@@ -1,0 +1,14 @@
+target/
+ui/build/
+ui/.next/
+
+node_modules/
+ui/node_modules/
+
+.git/
+.idea/
+.vscode/
+
+start.bat
+start.sh
+npm-debug.log*
