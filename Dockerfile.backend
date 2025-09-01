@@ -1,12 +1,12 @@
-FROM maven:3.9-openjdk-17-slim AS build
+FROM maven:3-openjdk-17-slim AS build
+
 WORKDIR /build
 COPY pom.xml .
 COPY src ./src
-RUN mvn clean package
+RUN mvn clean package -DskipTests
 
 FROM openjdk:17-slim
 WORKDIR /app
-COPY --from=build /build/target/p2p-1.0-SNAPSHOT.jar app.jar
-COPY --from=build /build/target/dependency/*.jar ./lib/
+COPY --from=build /build/target/P2P-File-Sharing-1.0-SNAPSHOT.jar app.jar
 EXPOSE 8080
 CMD ["java", "-cp", "app.jar:lib/*", "p2p.App"]
