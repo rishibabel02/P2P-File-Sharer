@@ -6,7 +6,7 @@ mvn clean package
 
 # Start the Java backend in the background
 echo "Starting Java backend..."
-java -jar target/p2p-1.0-SNAPSHOT.jar &
+java -jar target/P2P-File-Sharing-1.0-SNAPSHOT.jar &
 BACKEND_PID=$!
 
 # Wait for the backend to start

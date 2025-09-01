@@ -31,7 +31,7 @@ DropFlo is a secure, peer-to-peer (P2P) file sharing application. It consists of
 ```bash
 cd P2P-FIle-Sharing
 mvn clean package
-java -jar target/p2p-1.0-SNAPSHOT.jar
+java -jar target/P2P-File-Sharing-1.0-SNAPSHOT.jar
 ```
 
 ### Main Files

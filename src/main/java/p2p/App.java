@@ -22,8 +22,8 @@ public class App {
                     )
             );
 
-            System.out.println("Press Enter to stop the server...");
-            System.in.read();
+//            System.out.println("Press Enter to stop the server...");
+//            System.in.read();
 
 
         } catch (IOException e) {

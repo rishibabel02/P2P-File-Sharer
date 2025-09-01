@@ -20,7 +20,7 @@ export default function Home() {
     try {
       const formData = new FormData();
       formData.append('file', file);
-      
+
       const response = await axios.post('/api/upload', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
@@ -31,16 +31,15 @@ export default function Home() {
     } catch (error) {
       console.error('Error uploading file:', error);
       alert('Failed to upload file. Please try again.');
-    } finally {
+      setIsUploading(false);
+    }finally{
       setIsUploading(false);
     }
   };
   
   const handleDownload = async (port: number) => {
     setIsDownloading(true);
-    
     try {
-      // Request download from Java backend
       const response = await axios.get(`/api/download/${port}`, {
         responseType: 'blob',
       });
@@ -49,12 +48,9 @@ export default function Home() {
       const link = document.createElement('a');
       link.href = url;
       
-      // Try to get filename from response headers
-      // Axios normalizes headers to lowercase, but we need to handle different cases
       const headers = response.headers;
       let contentDisposition = '';
       
-      // Look for content-disposition header regardless of case
       for (const key in headers) {
         if (key.toLowerCase() === 'content-disposition') {
           contentDisposition = headers[key];
@@ -133,10 +129,17 @@ export default function Home() {
               </div>
             )}
             
-            <InviteCode port={port} />
+            {(() => {
+              console.log('Conditional rendering check: port =', port, ', isUploading =', isUploading);
+              console.log('Should render InviteCode?', port && !isUploading);
+              return port && !isUploading && (
+                <InviteCode port={port} />
+              );
+            })()}
           </div>
         ) : (
           <div>
+            
             <FileDownload onDownload={handleDownload} isDownloading={isDownloading} />
             
             {isDownloading && (
