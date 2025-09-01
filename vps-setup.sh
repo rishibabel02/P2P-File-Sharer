@@ -65,7 +65,17 @@ echo "Creating /etc/nginx/sites-available/dropflo..."
 cat <<EOF | sudo tee /etc/nginx/sites-available/dropflo
 server {
     listen 80;
-    server_name _; # Catch-all for HTTP requests
+   server_name 13.232.166.235 dropflo.click www.dropflo.click;
+   return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    server_name 13.232.166.235 dropflo.click www.dropflo.click;
+
+    # SSL certificate paths will be set by Lightsail when attaching the certificate
+    # ssl_certificate /etc/nginx/ssl/dropflo.click.crt;
+    # ssl_certificate_key /etc/nginx/ssl/dropflo.click.key;
 
     # Backend API
     location /api/ {
@@ -93,10 +103,12 @@ server {
         proxy_cache_bypass \$http_upgrade;
     }
 
-    # Additional security headers (still good to have)
-    add_header X-Content-Type-Options nosniff;
-    add_header X-Frame-Options SAMEORIGIN;
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+    add_header X-Content-Type-Options "nosniff";
+    add_header X-Frame-Options "DENY";
     add_header X-XSS-Protection "1; mode=block";
+    add_header Content-Security-Policy "default-src 'self'";
+    client_max_body_size 1M;
 }
 EOF
 
