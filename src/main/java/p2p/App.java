@@ -10,7 +10,7 @@ public class App {
             FileShareController fileShareController = new FileShareController(8080);
             fileShareController.start();
             System.out.println("DropFlo server is running on port 8080");
-            System.out.println("UI available at http://localhost:8080");
+            System.out.println("UI available at http://localhost:3000");
 
             Runtime.getRuntime().addShutdownHook(
                     new Thread(

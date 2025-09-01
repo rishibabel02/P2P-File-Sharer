@@ -21,7 +21,6 @@ export default function FileDownload({ onDownload, isDownloading }: FileDownload
       setError('Please enter a valid port number (1-65535)');
       return;
     }
-    
     try {
       await onDownload(port);
     } catch (err) {

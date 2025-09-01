@@ -136,7 +136,7 @@ public class FileShareController {
                 int port = fileSharer.offerFile(filePath);
                 new Thread(() -> fileSharer.startFileServer(port)).start();
 
-                String jsonResponse = "{\"port\":}" + port + "}";
+                String jsonResponse = "{\"port\":" + port + "}";
                 headers.add("Content-Type", "application/json");
                 httpExchange.sendResponseHeaders(200, jsonResponse.getBytes().length);
 
