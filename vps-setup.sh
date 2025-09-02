@@ -69,7 +69,7 @@ server {
     location / {
         root /home/ubuntu/P2P-File-Sharer/ui/build;
         index index.html;
-        try_files $uri /index.html;
+        try_files \$uri /index.html;
     }
 
     add_header X-Content-Type-Options nosniff;
