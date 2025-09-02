@@ -75,7 +75,6 @@ server {
     add_header X-Frame-Options SAMEORIGIN;
     add_header X-XSS-Protection "1; mode=block";
     }
-}
 EOF
 
 # Create the symbolic link to enable the dropflo site

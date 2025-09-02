@@ -58,7 +58,7 @@ public class FileShareController {
             headers.add("Access-Control-Allow-Origin", "*");
             headers.add("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
             headers.add("Access-Control-Allow-Headers", "Content-Type, Authorization");
-            
+
             String res = "NOT FOUND";
             httpExchange.sendResponseHeaders(404, res.getBytes().length);
 
