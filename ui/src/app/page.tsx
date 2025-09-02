@@ -13,8 +13,6 @@ export default function Home() {
   const [port, setPort] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<'upload' | 'download'>('upload');
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-
   const handleFileUpload = async (file: File) => {
     setUploadedFile(file);
     setIsUploading(true);
@@ -23,7 +21,7 @@ export default function Home() {
       const formData = new FormData();
       formData.append('file', file);
 
-      const response = await axios.post(`${apiUrl}/upload`, formData, {
+      const response = await axios.post('/api/upload', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -42,7 +40,7 @@ export default function Home() {
   const handleDownload = async (port: number) => {
     setIsDownloading(true);
     try {
-      const response = await axios.get(`${apiUrl}/download/${port}`, {
+      const response = await axios.get(`/api/download/${port}`, {
         responseType: 'blob',
       });
       

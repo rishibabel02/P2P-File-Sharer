@@ -58,12 +58,7 @@ public class FileShareController {
             headers.add("Access-Control-Allow-Origin", "*");
             headers.add("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
             headers.add("Access-Control-Allow-Headers", "Content-Type, Authorization");
-
-            if (httpExchange.getRequestMethod().equals("OPTIONS")) {
-                httpExchange.sendResponseHeaders(200, -1);
-                return;
-            }
-
+            
             String res = "NOT FOUND";
             httpExchange.sendResponseHeaders(404, res.getBytes().length);
 
@@ -79,11 +74,6 @@ public class FileShareController {
         public void handle(HttpExchange httpExchange) throws IOException {
             Headers headers = httpExchange.getResponseHeaders();
             headers.add("Access-Control-Allow-Origin", "*");
-
-            if (httpExchange.getRequestMethod().equalsIgnoreCase("OPTIONS")) {
-                httpExchange.sendResponseHeaders(204, -1);
-                return;
-            }
 
             if (!httpExchange.getRequestMethod().equalsIgnoreCase("POST")) {
                 String res = "Method Not Allowed";

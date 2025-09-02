@@ -23,5 +23,4 @@ yarn-error.log*
 # Next.js build output
 ui/.next/ 
 
-.env
 .gitignore
