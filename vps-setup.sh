@@ -1,41 +1,116 @@
 #!/bin/bash
-# File: vps-setup.sh (Updated for Docker)
 
-# DropFlo One-Time Server Setup Script
-
-echo "=== Starting Docker-based Server Setup ==="
+# Exit on any error
 set -e
 
-# 1. System Updates & Dependency Installation
-echo "--> Installing system dependencies (Git, Nginx, Docker)..."
-sudo apt-get update
-sudo apt-get install -y git nginx docker.io docker-compose
+echo "=== Starting Simple DropFlo Setup ==="
 
-# Add the current user to the docker group to run docker commands without sudo
-# You might need to log out and log back in for this to take effect.
-sudo usermod -aG docker ${USER}
+# 1. Install Dependencies
+echo "--> Installing Java, Node.js, Nginx, PM2, Maven, and Git..."
+sudo apt update
+sudo apt upgrade -y
+sudo apt install -y openjdk-17-jdk nginx maven git certbot python3-certbot-nginx
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt install -y nodejs
+sudo npm install -g pm2
 
-# 2. Start and enable Docker service
-echo "--> Starting and enabling Docker service..."
-sudo systemctl start docker
-sudo systemctl enable docker
+# 2. Clone Repository
+# echo "--> Cloning application repository..."
+# git clone https://github.com/rishibabel02/P2P-File-Sharer.git
+# cd P2P-File-Sharer
 
-# 3. Initial Application Code Checkout
-echo "--> Cloning application repository..."
-git clone https://github.com/rishibabel02/P2P-File-Sharer.git
-cd P2P-File-Sharer
+# 3. Build Backend
+echo "--> Building Java backend..."
+mvn clean package
 
-# 4. Initial Nginx Setup
-# This sets up the reverse proxy to point to the Docker containers.
-echo "--> Performing initial Nginx setup..."
+# 4. Build Frontend
+echo "--> Building frontend..."
+cd ui
+npm install
+npm run build
+cd ..
+
+# 5. Set up Nginx and SSL with Certbot
+echo "--> Setting up Nginx and getting SSL certificate..."
+
 if [ -e /etc/nginx/sites-enabled/default ]; then
     sudo rm /etc/nginx/sites-enabled/default
+    echo "Removed default Nginx site configuration."
 fi
-sudo cp config/dropflo.nginx /etc/nginx/sites-available/dropflo
-sudo ln -sf /etc/nginx/sites-available/dropflo /etc/nginx/sites-enabled/dropflo
-sudo nginx -t
-sudo systemctl restart nginx
 
-echo "=== Server Setup Complete! ==="
-echo "The server is ready. Log out and log back in to apply Docker group permissions."
-echo "Then, navigate to the P2P-File-Sharer directory and run './deploy.sh' to start the application."
+# Create a basic Nginx config file for Certbot to use for validation
+cat <<EOF | sudo tee /etc/nginx/sites-available/dropflo
+server {
+    listen 80;
+    server_name _; 
+
+    # Backend API
+    location /api/ {
+        proxy_pass http://localhost:8080/;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_cache_bypass \$http_upgrade;
+    }
+
+    # Frontend
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_cache_bypass \$http_upgrade;
+    }
+
+    # Additional security headers (still good to have)
+    add_header X-Content-Type-Options nosniff;
+    add_header X-Frame-Options SAMEORIGIN;
+    add_header X-XSS-Protection "1; mode=block";
+    }
+}
+EOF
+
+# Create the symbolic link to enable the dropflo site
+sudo ln -sf /etc/nginx/sites-available/dropflo /etc/nginx/sites-enabled/dropflo
+
+sudo nginx -t
+if [ $? -eq 0 ]; then
+    sudo systemctl restart nginx
+    echo "Nginx configured and restarted successfully."
+else
+    echo "Nginx configuration test failed. Please check /etc/nginx/nginx.conf and /etc/nginx/sites-available/dropflo."
+    exit 1
+fi
+
+# Set up SSL with Let's Encrypt 
+echo "Setting up SSL with Let's Encrypt..."
+sudo apt install -y certbot python3-certbot-nginx
+sudo certbot --nginx -d your-actual-domain.com
+
+# Start backend with PM2
+echo "Starting backend with PM2..."
+# Ensure all dependencies are in the classpath
+CLASSPATH="target/P2P-File-Sharing-1.0-SNAPSHOT.jar:$(mvn dependency:build-classpath -DincludeScope=runtime -Dmdep.outputFile=/dev/stdout -q)"
+pm2 start --name dropflo-backend java -- -cp "$CLASSPATH" p2p.App
+
+# Start frontend with PM2
+echo "Starting frontend with PM2..."
+cd ui
+pm2 start npm --name dropflo-frontend -- start
+cd ..
+
+
+# 7. Finalize PM2 Setup
+pm2 save
+pm2 startup
+
+echo "=== Setup Complete! ==="
+echo "Your application is now running and accessible at https://www.dropflo.click"
