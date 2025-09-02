@@ -92,7 +92,7 @@ fi
 # Set up SSL with Let's Encrypt 
 echo "Setting up SSL with Let's Encrypt..."
 sudo apt install -y certbot python3-certbot-nginx
-sudo certbot --nginx -d your-actual-domain.com
+sudo certbot --nginx -d dropflo.click
 
 # Start backend with PM2
 echo "Starting backend with PM2..."
