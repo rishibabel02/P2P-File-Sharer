@@ -42,7 +42,7 @@ fi
 cat <<EOF | sudo tee /etc/nginx/sites-available/dropflo
 server {
     listen 80;
-    server_name _; 
+    server_name dropflo.click www.dropflo.click; 
 
     # Backend API
     location /api/ {
@@ -96,6 +96,7 @@ sudo certbot --nginx -d dropflo.click
 
 # Start backend with PM2
 echo "Starting backend with PM2..."
+
 # Ensure all dependencies are in the classpath
 CLASSPATH="target/P2P-File-Sharing-1.0-SNAPSHOT.jar:$(mvn dependency:build-classpath -DincludeScope=runtime -Dmdep.outputFile=/dev/stdout -q)"
 pm2 start --name dropflo-backend java -- -cp "$CLASSPATH" p2p.App
