@@ -80,6 +80,11 @@ public class FileShareController {
             Headers headers = httpExchange.getResponseHeaders();
             headers.add("Access-Control-Allow-Origin", "*");
 
+            if (httpExchange.getRequestMethod().equalsIgnoreCase("OPTIONS")) {
+                httpExchange.sendResponseHeaders(204, -1);
+                return;
+            }
+
             if (!httpExchange.getRequestMethod().equalsIgnoreCase("POST")) {
                 String res = "Method Not Allowed";
                 httpExchange.sendResponseHeaders(405, res.getBytes().length);
@@ -251,6 +256,10 @@ private class DownloadHandler implements HttpHandler{
             Headers headers = httpExchange.getResponseHeaders();
             headers.add("Access-Control-Allow-Origin", "*");
 
+            if (httpExchange.getRequestMethod().equalsIgnoreCase("OPTIONS")) {
+                httpExchange.sendResponseHeaders(204, -1);
+                return;
+            }
             if(!httpExchange.getRequestMethod().equalsIgnoreCase("GET")){
                 String res = "Method not allowed!";
                 httpExchange.sendResponseHeaders(405, res.getBytes().length);
