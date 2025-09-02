@@ -43,6 +43,14 @@ cat <<EOF | sudo tee /etc/nginx/sites-available/dropflo
 server {
     listen 80;
     server_name dropflo.click www.dropflo.click; 
+    return 301 https://$host$request_uri;
+}
+server {
+    listen 443 ssl;
+    server_name dropflo.click www.dropflo.click;
+
+    ssl_certificate /etc/letsencrypt/live/dropflo.click/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/dropflo.click/privkey.pem;
 
     # Backend API
     location /api/ {
@@ -59,18 +67,11 @@ server {
 
     # Frontend
     location / {
-        proxy_pass http://localhost:3000;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade \$http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
-        proxy_cache_bypass \$http_upgrade;
+        root /home/ubuntu/P2P-File-Sharer/ui/build;
+        index index.html;
+        try_files $uri /index.html;
     }
 
-    # Additional security headers (still good to have)
     add_header X-Content-Type-Options nosniff;
     add_header X-Frame-Options SAMEORIGIN;
     add_header X-XSS-Protection "1; mode=block";
@@ -101,11 +102,11 @@ echo "Starting backend with PM2..."
 CLASSPATH="target/P2P-File-Sharing-1.0-SNAPSHOT.jar:$(mvn dependency:build-classpath -DincludeScope=runtime -Dmdep.outputFile=/dev/stdout -q)"
 pm2 start --name dropflo-backend java -- -cp "$CLASSPATH" p2p.App
 
-# Start frontend with PM2
-echo "Starting frontend with PM2..."
-cd ui
-pm2 start npm --name dropflo-frontend -- start
-cd ..
+# # Start frontend with PM2
+# echo "Starting frontend with PM2..."
+# cd ui
+# pm2 start npm --name dropflo-frontend -- start
+# cd ..
 
 
 # 7. Finalize PM2 Setup
