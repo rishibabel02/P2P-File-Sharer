@@ -1,117 +1,113 @@
 #!/bin/bash
-
 # Exit on any error
 set -e
 
 echo "=== Starting Simple DropFlo Setup ==="
 
-# 1. Install Dependencies
-echo "--> Installing Java, Node.js, Nginx, PM2, Maven, and Git..."
-sudo apt update
-sudo apt upgrade -y
-sudo apt install -y openjdk-17-jdk nginx maven git certbot python3-certbot-nginx
+# 1. Install All Dependencies
+echo "--> Installing Java, Node.js, Nginx, PM2, Maven, Git, and Certbot..."
+sudo apt-get update
+sudo apt-get upgrade -y
+# Install all dependencies in one go
+sudo apt-get install -y openjdk-17-jdk nginx maven git certbot python3-certbot-nginx
+# Install Node.js v18.x
 curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-sudo apt install -y nodejs
+sudo apt-get install -y nodejs
+# Install PM2 globally
 sudo npm install -g pm2
 
-# 2. Clone Repository
-# echo "--> Cloning application repository..."
-# git clone https://github.com/rishibabel02/P2P-File-Sharer.git
-# cd P2P-File-Sharer
-
-# 3. Build Backend
+# 2. Clone Repository and Build Applications
+# This script assumes it is run from WITHIN the cloned repository folder.
 echo "--> Building Java backend..."
 mvn clean package
 
-# 4. Build Frontend
-echo "--> Building frontend..."
+echo "--> Building Next.js frontend..."
 cd ui
 npm install
 npm run build
 cd ..
 
-# 5. Set up Nginx and SSL with Certbot
+# 3. Set up Nginx and SSL with Certbot
 echo "--> Setting up Nginx and getting SSL certificate..."
 
-if [ -e /etc/nginx/sites-enabled/default ]; then
+# Remove the default Nginx config if it exists
+if [ -f /etc/nginx/sites-enabled/default ]; then
     sudo rm /etc/nginx/sites-enabled/default
-    echo "Removed default Nginx site configuration."
 fi
 
-# Create a basic Nginx config file for Certbot to use for validation
+# Create a temporary Nginx config file for Certbot to perform its validation
 cat <<EOF | sudo tee /etc/nginx/sites-available/dropflo
 server {
     listen 80;
-    server_name dropflo.click www.dropflo.click; 
-    return 301 https://$host$request_uri;
-}
-server {
-    listen 443 ssl;
     server_name dropflo.click www.dropflo.click;
 
+    # A temporary root for Certbot's webroot challenge
+    root /var/www/html;
+    index index.html index.htm;
+}
+EOF
+
+# Enable the temporary config and restart Nginx
+sudo ln -sf /etc/nginx/sites-available/dropflo /etc/nginx/sites-enabled/
+sudo nginx -t && sudo systemctl restart nginx
+
+# Run Certbot to get the SSL certificate.
+# This will automatically modify the Nginx config to enable HTTPS.
+echo "--> Running Certbot..."
+sudo certbot --nginx --redirect --non-interactive --agree-tos -m rishibabel02@gmail.com -d dropflo.click -d www.dropflo.click
+
+# Overwrite the Nginx config with our FINAL version, which includes proxying
+echo "--> Applying final Nginx configuration..."
+cat <<EOF | sudo tee /etc/nginx/sites-available/dropflo
+server {
+    listen 80;
+    server_name dropflo.click www.dropflo.click;
+    # This redirect block is created by Certbot
+    return 301 https://\$host\$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name dropflo.click www.dropflo.click;
+
+    # These SSL certificate paths are created and managed by Certbot
     ssl_certificate /etc/letsencrypt/live/dropflo.click/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/dropflo.click/privkey.pem;
 
-    # Backend API
+    # Backend API proxy
     location /api/ {
         proxy_pass http://localhost:8080/;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade \$http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
-        proxy_cache_bypass \$http_upgrade;
     }
 
-    # Frontend
+    # Frontend proxy
     location / {
-        root /home/ubuntu/P2P-File-Sharer/ui/build;
-        index index.html;
-        try_files \$uri /index.html;
+        proxy_pass http://localhost:3000;
     }
-
-    add_header X-Content-Type-Options nosniff;
-    add_header X-Frame-Options SAMEORIGIN;
-    add_header X-XSS-Protection "1; mode=block";
-    }
+}
 EOF
 
-# Create the symbolic link to enable the dropflo site
-sudo ln -sf /etc/nginx/sites-available/dropflo /etc/nginx/sites-enabled/dropflo
+# Test and restart Nginx with the final configuration
+sudo nginx -t && sudo systemctl restart nginx
+echo "--> Nginx and SSL configured successfully."
 
-sudo nginx -t
-if [ $? -eq 0 ]; then
-    sudo systemctl restart nginx
-    echo "Nginx configured and restarted successfully."
-else
-    echo "Nginx configuration test failed. Please check /etc/nginx/nginx.conf and /etc/nginx/sites-available/dropflo."
-    exit 1
-fi
+# 4. Start Backend and Frontend with PM2
+echo "--> Starting backend with PM2..."
+CLASSPATH="target/P2P-File-Sharing-1.0-SNAPSHOT.jar"
+# Using an absolute path for the JAR is more robust
+pm2 start --name dropflo-backend "java -cp $(pwd)/$CLASSPATH p2p.App"
 
-# Set up SSL with Let's Encrypt 
-echo "Setting up SSL with Let's Encrypt..."
-sudo apt install -y certbot python3-certbot-nginx
-sudo certbot --nginx -d dropflo.click
+echo "--> Starting frontend with PM2..."
+cd ui
+# 'npm start' runs the optimized Next.js production server
+pm2 start npm --name dropflo-frontend -- start
+cd ..
 
-# Start backend with PM2
-echo "Starting backend with PM2..."
-
-# Ensure all dependencies are in the classpath
-CLASSPATH="target/P2P-File-Sharing-1.0-SNAPSHOT.jar:$(mvn dependency:build-classpath -DincludeScope=runtime -Dmdep.outputFile=/dev/stdout -q)"
-pm2 start --name dropflo-backend java -- -cp "$CLASSPATH" p2p.App
-
-# # Start frontend with PM2
-# echo "Starting frontend with PM2..."
-# cd ui
-# pm2 start npm --name dropflo-frontend -- start
-# cd ..
-
-
-# 7. Finalize PM2 Setup
+# 5. Finalize PM2 Setup
+echo "--> Configuring PM2 to start on boot..."
 pm2 save
-pm2 startup
+# This command generates another command you may need to run.
+# The script will pause and wait for you to run it if necessary.
+sudo env PATH=\$PATH:/usr/bin /usr/lib/node_modules/pm2/bin/pm2 startup systemd -u ubuntu --hp /home/ubuntu
 
 echo "=== Setup Complete! ==="
-echo "Your application is now running and accessible at https://www.dropflo.click"
+echo "Your application should now be running and accessible at https://www.dropflo.click"
