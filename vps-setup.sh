@@ -54,7 +54,7 @@ sudo nginx -t && sudo systemctl restart nginx
 # Run Certbot to get the SSL certificate.
 # This will automatically modify the Nginx config to enable HTTPS.
 echo "--> Running Certbot..."
-sudo certbot --nginx --redirect --non-interactive --agree-tos -m rishibabel02@gmail.com -d dropflo.click -d www.dropflo.click
+sudo certbot --nginx --redirect --non-interactive --agree-tos --expand -m rishibabel02@gmail.com -d dropflo.click -d www.dropflo.click
 
 # Overwrite the Nginx config with our FINAL version, which includes proxying
 echo "--> Applying final Nginx configuration..."
