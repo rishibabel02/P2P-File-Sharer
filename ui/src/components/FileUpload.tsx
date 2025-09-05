@@ -46,7 +46,7 @@ export default function FileUpload({ onFileUpload, isUploading }: FileUploadProp
         </div>
         <p className="text-lg font-medium">Drag & drop a file here, or click to select</p>
         <p className="text-sm text-gray-500">
-          Share any file with your peers securely
+          Share any file with your peers
         </p>
       </div>
     </div>

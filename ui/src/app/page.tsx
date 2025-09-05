@@ -13,8 +13,14 @@ export default function Home() {
   const [port, setPort] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<'upload' | 'download'>('upload');
 
+  const handleReset = () => {
+    setUploadedFile(null);
+    setPort(null);
+    setIsUploading(false);
+  };
+
   const handleFileUpload = async (file: File) => {
-    setUploadedFile(file);
+    handleReset();
     setIsUploading(true);
     
     try {
@@ -28,10 +34,11 @@ export default function Home() {
       });
       
       setPort(response.data.port);
+      setUploadedFile(file)
     } catch (error) {
       console.error('Error uploading file:', error);
       alert('Failed to upload file. Please try again.');
-      setIsUploading(false);
+      handleReset();
     }finally{
       setIsUploading(false);
     }
@@ -83,7 +90,7 @@ export default function Home() {
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <header className="text-center mb-12">
         <h1 className="text-4xl font-bold text-blue-600 mb-2">DropFlo</h1>
-        <p className="text-xl text-gray-600">Secure P2P File Sharing</p>
+        <p className="text-xl text-gray-600">P2P File Sharing</p>
       </header>
       
       <div className="bg-white rounded-lg shadow-lg p-6">
@@ -111,32 +118,36 @@ export default function Home() {
         </div>
         
         {activeTab === 'upload' ? (
-          <div>
-            <FileUpload onFileUpload={handleFileUpload} isUploading={isUploading} />
-            
-            {uploadedFile && !isUploading && (
-              <div className="mt-4 p-3 bg-gray-50 rounded-md">
-                <p className="text-sm text-gray-600">
-                  Selected file: <span className="font-medium">{uploadedFile.name}</span> ({Math.round(uploadedFile.size / 1024)} KB)
-                </p>
-              </div>
-            )}
-            
-            {isUploading && (
-              <div className="mt-6 text-center">
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-500 border-t-transparent"></div>
-                <p className="mt-2 text-gray-600">Uploading file...</p>
-              </div>
-            )}
-            
-            {(() => {
-              console.log('Conditional rendering check: port =', port, ', isUploading =', isUploading);
-              console.log('Should render InviteCode?', port && !isUploading);
-              return port && !isUploading && (
-                <InviteCode port={port} />
-              );
-            })()}
-          </div>
+        <div>
+          {port && !isUploading ? (
+            <>
+              <InviteCode port={port} />
+              {uploadedFile && (
+                <div className="mt-4 p-3 bg-gray-50 rounded-md">
+                  <p className="text-sm text-gray-600">
+                    Selected file: <span className="font-medium">{uploadedFile.name}</span> ({Math.round(uploadedFile.size / 1024)} KB)
+                  </p>
+                </div>
+              )}
+              <button
+                onClick={handleReset}
+                className="w-full mt-4 px-4 py-2 font-medium text-blue-600 border-2 border-blue-500 hover:bg-blue-50 rounded"
+              >
+                Share Another File
+              </button>
+            </>
+          ) : (
+            <>
+              <FileUpload onFileUpload={handleFileUpload} isUploading={isUploading} />
+              {isUploading && (
+                <div className="mt-6 text-center">
+                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-500 border-t-transparent"></div>
+                  <p className="mt-2 text-gray-600">Uploading file...</p>
+                </div>
+              )}
+            </>
+          )}
+        </div>
         ) : (
           <div>
             
@@ -153,7 +164,7 @@ export default function Home() {
       </div>
       
       <footer className="mt-12 text-center text-gray-500 text-sm">
-        <p>DropFlo &copy; {new Date().getFullYear()} - Secure P2P File Sharing</p>
+        <p>DropFlo &copy; {new Date().getFullYear()} - P2P File Sharing</p>
       </footer>
     </div>
   );

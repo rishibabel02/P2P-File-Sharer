@@ -22,10 +22,6 @@ public class App {
                     )
             );
 
-//            System.out.println("Press Enter to stop the server...");
-//            System.in.read();
-
-
         } catch (IOException e) {
             System.err.println("Failed to start server on port 8080: " + e.getMessage());
             e.printStackTrace();

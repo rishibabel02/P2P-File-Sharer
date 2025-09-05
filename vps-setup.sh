@@ -69,6 +69,7 @@ server {
 server {
     listen 443 ssl http2;
     server_name dropflo.click www.dropflo.click;
+    client_max_body_size 50M;
 
     # These SSL certificate paths are created and managed by Certbot
     ssl_certificate /etc/letsencrypt/live/dropflo.click/fullchain.pem;
